@@ -1,4 +1,4 @@
-name = "autumn-boat-dd1e"  # Name of your Cloudflare Worker
+name = "rapid-band-2742"  # Name of your Cloudflare Worker
 type = "javascript"  # Type of Worker (JavaScript)
 
 # Cloudflare account information
@@ -13,6 +13,6 @@ kv_namespaces = [
 
 # Optional: If using a custom domain for production
 [env.production]
-name = "autumn-boat-dd1e-prod"  # Name for the production environment (optional)
+name = "rapid-band-2742"  # Name for the production environment (optional)
 route = "https://your-domain.com/*"  # Custom domain for the production environment (optional)
 zone_id = "your-zone-id"  # Cloudflare Zone ID for the domain (optional)
